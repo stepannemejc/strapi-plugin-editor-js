@@ -1,5 +1,5 @@
 {
-  "version": "0.0.0",
+  "version": "0.0.2",
   "keywords": [],
   "type": "commonjs",
   "exports": {
@@ -41,6 +41,7 @@
     "@editorjs/raw": "^2.5.0",
     "@editorjs/simple-image": "^1.6.0",
     "@editorjs/table": "^2.4.2",
+    "@phigoro/editorjs-toc": "^1.1.11",
     "@strapi/design-system": "^2.0.0-rc.11",
     "@strapi/icons": "^2.0.0-rc.11",
     "react-intl": "^6.8.2"
@@ -69,11 +70,11 @@
   "strapi": {
     "kind": "plugin",
     "name": "editor-js",
-    "displayName": "Editor.JS field",
+    "displayName": "Editor.JS pole",
     "description": "Adds a custom editor.js field type to Strapi"
   },
-  "name": "@matthewkilpatrick/strapi-plugin-editor-js",
+  "name": "@stepik21/strapi-plugin-editor-js",
   "description": "",
   "license": "MIT",
-  "author": "Matthew Kilpatrick <accounts@matthewkilpatrick.uk>"
+  "author": "Stepan Nemejc <nemejc@apexmedia.cz>"
 }

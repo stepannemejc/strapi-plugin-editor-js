@@ -6,6 +6,7 @@ import EditorJsTable from '@editorjs/table';
 import EditorJsQuote from '@editorjs/quote';
 import EditorJsRaw from '@editorjs/raw';
 import EditorJsEmbed from '@editorjs/embed';
+import TOC from '@phigoro/editorjs-toc';
 import { Box, Field } from '@strapi/design-system';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
@@ -16,7 +17,6 @@ import MediaLibComponent from '../medialib/component.jsx';
 import MediaLibAdapter from '../medialib/adapter';
 import { changeFunc } from '../medialib/utils';
 import EditorJsImage from '@editorjs/simple-image';
-
 
 /**
  * @template {({ target: { name: string, value: string } }) => any} OnChangeFn
@@ -44,134 +44,139 @@ const Input = (params) => {
 
   const [isMediaLibOpen, setIsMediaLibOpen] = useState(false);
 
-  const mediaLibToggleFunc = () => setIsMediaLibOpen( prev => !prev );
+  const mediaLibToggleFunc = () => setIsMediaLibOpen((prev) => !prev);
 
   const handleMediaLibChange = (data) => {
     changeFunc({
       data,
-      editor: editorJsInstance
+      editor: editorJsInstance,
     });
     mediaLibToggleFunc();
   };
-
 
   useEffect(() => {
     setEditorJsOutputData(jsonToEditorJsOutputData(value));
   }, [value]);
 
   useEffect(() => {
+    if (!editorJsInstance) {
+      setEditorJsInstance(
+        // https://editorjs.io/configuration
+        new EditorJs({
+          holder: elementId,
+          minHeight: 32,
 
-  if (!editorJsInstance) {
-    setEditorJsInstance(
-      // https://editorjs.io/configuration
-      new EditorJs({
-        holder: elementId,
-        minHeight: 32,
+          data: editorJsOutputData,
 
-        data: editorJsOutputData,
+          onChange: async (api) => {
+            const outputData = await api.saver.save();
+            setEditorJsOutputData(outputData);
+            onChange({ target: { name, value: editorJsOutputDataToJson(outputData) } });
+          },
 
-        onChange: async (api) => {
-          const outputData = await api.saver.save();
-          setEditorJsOutputData(outputData);
-          onChange({ target: { name, value: editorJsOutputDataToJson(outputData) } });
-        },
-
-        tools: {
-          paragraph: {
-            // https://github.com/editor-js/paragraph
-            class: EditorJsParagraph,
-            inlineToolbar: true,
-            config: {
-              placeholder: formatMessage({ id: getTranslation('placeholder.paragraph') }),
+          tools: {
+            paragraph: {
+              // https://github.com/editor-js/paragraph
+              class: EditorJsParagraph,
+              inlineToolbar: true,
+              config: {
+                placeholder: formatMessage({ id: getTranslation('placeholder.paragraph') }),
+              },
+            },
+            header: {
+              // https://github.com/editor-js/header
+              class: EditorJsHeader,
+              inlineToolbar: true,
+              config: {
+                placeholder: formatMessage({ id: getTranslation('placeholder.header') }),
+                defaultLevel: 1,
+              },
+            },
+            quote: {
+              // https://github.com/editor-js/quote
+              class: EditorJsQuote,
+              inlineToolbar: true,
+              config: {
+                quotePlaceholder: formatMessage({ id: getTranslation('placeholder.quote') }),
+                captionPlaceholder: formatMessage({
+                  id: getTranslation('placeholder.quoteCaption'),
+                }),
+              },
+            },
+            table: {
+              // https://github.com/editor-js/table
+              class: EditorJsTable,
+              inlineToolbar: true,
+              config: {
+                withHeadings: true,
+              },
+            },
+            list: {
+              // https://github.com/editor-js/list
+              class: EditorJsList,
+              inlineToolbar: true,
+              config: {
+                defaultStyle: 'unordered',
+              },
+            },
+            mediaLib: {
+              class: MediaLibAdapter,
+              config: {
+                mediaLibToggleFunc,
+              },
+            },
+            image: {
+              class: EditorJsImage,
+              inlineToolbar: true,
+              toolbox: false, // only loaded to support rendering medialib images
+            },
+            embed: {
+              class: EditorJsEmbed,
+              inlineToolbar: true,
+              config: {
+                services: {
+                  bunnystream: {
+                    regex:
+                      /https:\/\/iframe.mediadelivery.net\/(embed|play)\/([0-9]+)\/([0-9a-f\-]+)/,
+                    embedUrl:
+                      'https://iframe.mediadelivery.net/embed/<%= remote_id %>?autoplay=false&loop=false&muted=false&preload=true&responsive=true',
+                    html: "<iframe scrolling='no' frameborder='no' allow='accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;' allowfullscreen='true' style='width: 100%; aspect-ratio: 16/9'></iframe>",
+                    id: (groups) => groups.slice(1).join('/'),
+                  },
+                },
+              },
+            },
+            raw: {
+              class: EditorJsRaw,
+              inlineToolbar: true,
+            },
+            toc: {
+              class: TOC,
             },
           },
-          header: {
-            // https://github.com/editor-js/header
-            class: EditorJsHeader,
-            inlineToolbar: true,
-            config: {
-              placeholder: formatMessage({ id: getTranslation('placeholder.header') }),
-              defaultLevel: 1,
-            },
-          },
-          quote: {
-            // https://github.com/editor-js/quote
-            class: EditorJsQuote,
-            inlineToolbar: true,
-            config: {
-              quotePlaceholder: formatMessage({ id: getTranslation('placeholder.quote') }),
-              captionPlaceholder: formatMessage({ id: getTranslation('placeholder.quoteCaption') }),
-            },
-          },
-          table: {
-            // https://github.com/editor-js/table
-            class: EditorJsTable,
-            inlineToolbar: true,
-            config: {
-              withHeadings: true
-            }
-          },
-          list: {
-            // https://github.com/editor-js/list
-            class: EditorJsList,
-            inlineToolbar: true,
-            config: {
-              defaultStyle: 'unordered',
-            },
-          },
-          mediaLib: {
-            class: MediaLibAdapter,
-            config: {
-              mediaLibToggleFunc
-            }
-          },
-          image: {
-            class: EditorJsImage,
-            inlineToolbar: true,
-            toolbox: false  // only loaded to support rendering medialib images
-          },
-          embed: {
-            class: EditorJsEmbed,
-            inlineToolbar: true,
-            config: {
-              services: {
-                bunnystream: {
-                  regex: /https:\/\/iframe.mediadelivery.net\/(embed|play)\/([0-9]+)\/([0-9a-f\-]+)/,
-                  embedUrl: 'https://iframe.mediadelivery.net/embed/<%= remote_id %>?autoplay=false&loop=false&muted=false&preload=true&responsive=true',
-                  html: "<iframe scrolling='no' frameborder='no' allow='accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;' allowfullscreen='true' style='width: 100%; aspect-ratio: 16/9'></iframe>",
-                  id: (groups) => groups.slice(1).join('/')
-                }
-              }
-            }
-          },
-          raw: {
-            class: EditorJsRaw,
-            inlineToolbar: true,
-          },
-        },
-      }),
-    );
-  }
+        })
+      );
+    }
   }, []);
 
   return (
     <>
-        <Field.Label for={elementId}>{name}</Field.Label>
-        <Box
-          id={elementId}
-          className="editorjs-box"
-          borderColor="neutral200"
-          hasRadius={true}
-          paddingLeft="64px"
-          paddingRight="16px"
-          paddingTop="16px"
-          paddingBottom="16px"
-          style={{
-            backgroundColor: 'white',
-            color: 'black'
+      <Field.Label for={elementId}>{name}</Field.Label>
+      <Box
+        id={elementId}
+        className="editorjs-box"
+        borderColor="neutral200"
+        hasRadius={true}
+        paddingLeft="64px"
+        paddingRight="16px"
+        paddingTop="16px"
+        paddingBottom="16px"
+        style={{
+          backgroundColor: 'white',
+          color: 'black',
         }}
-        />
-        <style>{`
+      />
+      <style>{`
           .codex-editor h1 {
             font-size: 3rem;
             font-weight: bold;
@@ -200,13 +205,12 @@ const Input = (params) => {
             font-size: 1.5rem;
           }
         `}</style>
-        <MediaLibComponent
-          isOpen={isMediaLibOpen}
-          onChange={handleMediaLibChange}
-          onToggle={mediaLibToggleFunc}
-        />
+      <MediaLibComponent
+        isOpen={isMediaLibOpen}
+        onChange={handleMediaLibChange}
+        onToggle={mediaLibToggleFunc}
+      />
     </>
-
   );
 };
 
