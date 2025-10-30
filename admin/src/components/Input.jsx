@@ -6,6 +6,7 @@ import EditorJsTable from '@editorjs/table';
 import EditorJsQuote from '@editorjs/quote';
 import EditorJsRaw from '@editorjs/raw';
 import EditorJsEmbed from '@editorjs/embed';
+import Warning from '@editorjs/warning';
 import TOC from '@phigoro/editorjs-toc';
 import { Box, Field } from '@strapi/design-system';
 import PropTypes from 'prop-types';
@@ -150,8 +151,12 @@ const Input = (params) => {
               class: EditorJsRaw,
               inlineToolbar: true,
             },
-            toc: {
-              class: TOC,
+            // toc: {
+            //   class: TOC,
+            // },
+            warning: {
+              class: Warning,
+              inlineToolbar: true,
             },
           },
         })
