@@ -9,6 +9,7 @@ import EditorJsEmbed from '@editorjs/embed';
 import Warning from '@editorjs/warning';
 import TOC from '@phigoro/editorjs-toc';
 import { Box, Field } from '@strapi/design-system';
+import { request } from '@strapi/helper-plugin';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
@@ -43,6 +44,8 @@ const Input = (params) => {
   const [editorJsOutputData, setEditorJsOutputData] = useState(jsonToEditorJsOutputData(value));
   const [editorJsInstance, setEditorJsInstance] = useState(undefined);
 
+  const [customCss, setCustomCss] = useState('');
+
   const [isMediaLibOpen, setIsMediaLibOpen] = useState(false);
 
   const mediaLibToggleFunc = () => setIsMediaLibOpen((prev) => !prev);
@@ -58,6 +61,27 @@ const Input = (params) => {
   useEffect(() => {
     setEditorJsOutputData(jsonToEditorJsOutputData(value));
   }, [value]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await request('/editor-js/config', { method: 'GET' });
+        if (!cancelled) {
+          setCustomCss(typeof res?.customCss === 'string' ? res.customCss : '');
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setCustomCss('');
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!editorJsInstance) {
@@ -209,6 +233,8 @@ const Input = (params) => {
           .codex-editor {
             font-size: 1.5rem;
           }
+
+          ${customCss}
         `}</style>
       <MediaLibComponent
         isOpen={isMediaLibOpen}
