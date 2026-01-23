@@ -1,13 +1,10 @@
-export default {
-  type: 'admin',
-  routes: [
-    {
-      method: 'GET',
-      path: '/config',
-      handler: 'config.get',
-      config: {
-        policies: [],
-      },
+export default [
+  {
+    method: 'GET',
+    path: '/config',
+    handler: 'config.getConfig',
+    config: {
+      policies: [],
     },
-  ],
-};
+  },
+];
