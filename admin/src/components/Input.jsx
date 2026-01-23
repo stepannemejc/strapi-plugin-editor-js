@@ -9,7 +9,6 @@ import EditorJsEmbed from '@editorjs/embed';
 import Warning from '@editorjs/warning';
 import TOC from '@phigoro/editorjs-toc';
 import { Box, Field } from '@strapi/design-system';
-import { request } from '@strapi/helper-plugin';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
@@ -66,16 +65,42 @@ const Input = (params) => {
     let cancelled = false;
 
     (async () => {
-      try {
-        const res = await request('/editor-js/config', { method: 'GET' });
-        if (!cancelled) {
-          setCustomCss(typeof res?.customCss === 'string' ? res.customCss : '');
-        }
-      } catch (e) {
-        if (!cancelled) {
-          setCustomCss('');
+      const backendURL = window?.strapi?.backendURL || '';
+      const candidates = [
+        // Admin route (preferred)
+        `${backendURL}/admin/plugins/editor-js/config`,
+        // Content API plugin route (fallback)
+        `${backendURL}/api/editor-js/config`,
+        // Some Strapi setups mount plugin admin routes without /admin/plugins
+        `${backendURL}/editor-js/config`,
+      ];
+
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!res.ok) continue;
+          const json = await res.json();
+
+          const nextCss =
+            (typeof json?.customCss === 'string' && json.customCss) ||
+            (typeof json?.styles?.customCss === 'string' && json.styles.customCss) ||
+            '';
+
+          if (!cancelled) setCustomCss(nextCss);
+          return;
+        } catch (e) {
+          // try next candidate
         }
       }
+
+      if (!cancelled) setCustomCss('');
     })();
 
     return () => {

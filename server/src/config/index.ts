@@ -12,6 +12,12 @@ export default {
         .shape({
           tools: yup.object(),
           customCss: yup.string(),
+          styles: yup
+            .object()
+            .shape({
+              customCss: yup.string(),
+            })
+            .optional(),
         })
         .validateSync(config);
     } catch (error) {

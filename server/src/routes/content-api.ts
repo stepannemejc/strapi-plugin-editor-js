@@ -1,12 +1,12 @@
 export default {
-  type: 'admin',
+  type: 'content-api',
   routes: [
     {
       method: 'GET',
       path: '/config',
       handler: 'config.get',
       config: {
-        policies: [],
+        auth: false,
       },
     },
   ],
