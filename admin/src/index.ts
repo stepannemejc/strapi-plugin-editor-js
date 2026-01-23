@@ -14,9 +14,9 @@ export default {
     });
     // @ts-ignore
     app.customFields.register({
-      name: 'editor-js',
-      pluginId: 'editor-js',
-      type: 'json',
+      name: "editor-js",
+      pluginId: "editor-js",
+      type: "json",
       icon: TextIcon,
       intlLabel: {
         id: getTranslation('builder.field.label'),
@@ -24,45 +24,13 @@ export default {
       intlDescription: {
         id: getTranslation('builder.field.description'),
       },
-      options: {
-        base: [
-          {
-            sectionTitle: {
-              id: getTranslation('options.sectionTitle'),
-            },
-            items: [
-              {
-                name: 'customCss',
-                type: 'textarea',
-                intlLabel: {
-                  id: getTranslation('options.customCss.label'),
-                },
-                intlDescription: {
-                  id: getTranslation('options.customCss.description'),
-                },
-              },
-              {
-                name: 'boxClassName',
-                type: 'text',
-                intlLabel: {
-                  id: getTranslation('options.boxClassName.label'),
-                },
-                intlDescription: {
-                  id: getTranslation('options.boxClassName.description'),
-                },
-              },
-            ],
-          },
-        ],
-        advanced: [],
-      },
       components: {
-        Input: () => import(/* webpackChunkName: "input-component" */ './components/Input.jsx'),
-      },
+        Input: ()=> import(/* webpackChunkName: "input-component" */ './components/Input.jsx'),
+      }
     });
   },
 
-  registerTrads: async function (app: any) {
+  registerTrads: async function(app: any) {
     const { locales } = app;
 
     return await Promise.all(
@@ -83,7 +51,7 @@ export default {
               locale,
             };
           });
-      })
+      }),
     );
   },
 };

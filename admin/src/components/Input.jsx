@@ -19,58 +19,6 @@ import MediaLibAdapter from '../medialib/adapter';
 import { changeFunc } from '../medialib/utils';
 import EditorJsImage from '@editorjs/simple-image';
 
-let globalConfigCache = null;
-let globalConfigPromise = null;
-
-const fetchGlobalEditorJsConfig = async () => {
-  if (globalConfigCache) return globalConfigCache;
-  if (globalConfigPromise) return globalConfigPromise;
-
-  const backendURL = window?.strapi?.backendURL || '';
-
-  const candidates = [
-    // Admin route (preferred)
-    `${backendURL}/admin/plugins/editor-js/config`,
-    // Content API plugin route (fallback)
-    `${backendURL}/api/editor-js/config`,
-    // Some Strapi setups mount plugin admin routes without /admin/plugins
-    `${backendURL}/editor-js/config`,
-  ];
-
-  globalConfigPromise = (async () => {
-    for (const url of candidates) {
-      try {
-        const res = await fetch(url, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!res.ok) continue;
-
-        const json = await res.json();
-        globalConfigCache = {
-          styles: {
-            customCss: typeof json?.styles?.customCss === 'string' ? json.styles.customCss : '',
-            boxClassName:
-              typeof json?.styles?.boxClassName === 'string' ? json.styles.boxClassName : '',
-          },
-        };
-        return globalConfigCache;
-      } catch (e) {
-        // try next candidate
-      }
-    }
-
-    globalConfigCache = { styles: { customCss: '', boxClassName: '' } };
-    return globalConfigCache;
-  })();
-
-  return globalConfigPromise;
-};
-
 /**
  * @template {({ target: { name: string, value: string } }) => any} OnChangeFn
  *
@@ -91,17 +39,6 @@ const Input = (params) => {
   let { name, onChange, value } = params;
   const { formatMessage } = useIntl();
 
-  const attribute =
-    params.attribute ||
-    params.fieldSchema?.attribute ||
-    params.field?.attribute ||
-    params.schema?.attribute;
-  const options = attribute?.options || attribute?.customField?.options || params.options || {};
-  const customCss = typeof options.customCss === 'string' ? options.customCss : '';
-  const boxClassName = typeof options.boxClassName === 'string' ? options.boxClassName : '';
-
-  const [globalStyles, setGlobalStyles] = useState({ customCss: '', boxClassName: '' });
-
   const [elementId] = useState(`editorjs-${name}`);
   const [editorJsOutputData, setEditorJsOutputData] = useState(jsonToEditorJsOutputData(value));
   const [editorJsInstance, setEditorJsInstance] = useState(undefined);
@@ -121,17 +58,6 @@ const Input = (params) => {
   useEffect(() => {
     setEditorJsOutputData(jsonToEditorJsOutputData(value));
   }, [value]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchGlobalEditorJsConfig().then((cfg) => {
-      if (cancelled) return;
-      setGlobalStyles(cfg?.styles || { customCss: '', boxClassName: '' });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (!editorJsInstance) {
@@ -243,7 +169,7 @@ const Input = (params) => {
       <Field.Label for={elementId}>{name}</Field.Label>
       <Box
         id={elementId}
-        className={`editorjs-box ${globalStyles.boxClassName || ''} ${boxClassName}`.trim()}
+        className="editorjs-box"
         borderColor="neutral200"
         hasRadius={true}
         paddingLeft="64px"
@@ -283,10 +209,6 @@ const Input = (params) => {
           .codex-editor {
             font-size: 1.5rem;
           }
-
-          /* Custom CSS (from custom field options) */
-          ${globalStyles.customCss || ''}
-          ${customCss}
         `}</style>
       <MediaLibComponent
         isOpen={isMediaLibOpen}

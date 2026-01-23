@@ -1,27 +1,21 @@
-import { yup } from '@strapi/utils';
+import {yup} from '@strapi/utils';
 
 export default {
   default: {
-    tools: {},
-    styles: {
-      customCss: '',
-      boxClassName: '',
-    },
+    tools: {}
   },
   validator(config) {
     try {
       yup
         .object()
         .shape({
-          tools: yup.object(),
-          styles: yup.object().shape({
-            customCss: yup.string(),
-            boxClassName: yup.string(),
-          }),
+          tools: yup.object()
         })
         .validateSync(config);
     } catch (error) {
-      throw new Error(`Editor.js plugin configuration error: ${error.errors}`);
+      throw new Error(
+        `Editor.js plugin configuration error: ${error.errors}`
+      );
     }
   },
 };
