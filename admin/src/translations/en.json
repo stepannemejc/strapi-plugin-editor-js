@@ -1,9 +1,14 @@
 {
   "builder.field.label": "Editor.js",
-  "builder.field.description": "Create Rich Text as JSON using Editor.js",
+  "builder.field.description": "Field based on Editor.js",
 
   "placeholder.paragraph": "Insert text...",
-  "placeholder.header": "Insert headline...",
   "placeholder.quote": "Insert quote...",
-  "placeholder.quoteCaption": "Insert quote caption..."
+  "placeholder.quoteCaption": "Insert quote caption...",
+
+  "options.sectionTitle": "Styling",
+  "options.customCss.label": "Custom CSS",
+  "options.customCss.description": "Extra CSS injected next to the editor. Example: .editorjs-box { background: #f6f6f6; }",
+  "options.boxClassName.label": "Extra wrapper class",
+  "options.boxClassName.description": "Optional class name added to the editor wrapper (<Box>)."
 }
