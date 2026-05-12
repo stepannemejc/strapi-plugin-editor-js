@@ -65,6 +65,16 @@ tools: {
 }
 ```
 
+## Dynamic Link Persistence Check
+
+Manual regression check for the bundled dynamic link inline tool:
+
+1. Create a paragraph block and select part of its text.
+2. Apply a dynamic link with category, item/pathname, params, and query params.
+3. Save the Strapi entry and refresh the edit page.
+4. Verify the selected text is still wrapped in an anchor.
+5. Inspect the saved Editor.js JSON and confirm `block.data.text` still contains `data-dynamic-link="true"` and all `data-dynamic-link-*` attributes.
+
 ## Credits
 
 This plugin is mostly duct-taped together based on the existing libraries, that don't yet support Strapi 5:

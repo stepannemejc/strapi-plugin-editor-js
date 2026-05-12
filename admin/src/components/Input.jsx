@@ -23,6 +23,31 @@ import EditorJsImage from '@editorjs/simple-image';
 import { DynamicLinkTool } from 'editorjs-external-item-link-picker';
 import 'editorjs-external-item-link-picker/dist/style.css';
 
+const DYNAMIC_LINK_ANCHOR_SANITIZER = {
+  href: true,
+  target: true,
+  rel: true,
+  class: true,
+  'data-dynamic-link': true,
+  'data-dynamic-link-category-id': true,
+  'data-dynamic-link-category-label': true,
+  'data-dynamic-link-item-id': true,
+  'data-dynamic-link-item-label': true,
+  'data-dynamic-link-pathname': true,
+  'data-dynamic-link-params': true,
+  'data-dynamic-link-query-params': true,
+};
+
+const DYNAMIC_LINK_SANITIZER = {
+  a: DYNAMIC_LINK_ANCHOR_SANITIZER,
+};
+
+class SanitizedDynamicLinkTool extends DynamicLinkTool {
+  static get sanitize() {
+    return DYNAMIC_LINK_SANITIZER;
+  }
+}
+
 const TOOL_CLASSES = {
   paragraph: EditorJsParagraph,
   EditorJsParagraph,
@@ -46,8 +71,8 @@ const TOOL_CLASSES = {
   Warning,
   toc: TOC,
   TOC,
-  dynamicLink: DynamicLinkTool,
-  DynamicLinkTool,
+  dynamicLink: SanitizedDynamicLinkTool,
+  DynamicLinkTool: SanitizedDynamicLinkTool,
 };
 
 let pluginConfigPromise;
@@ -273,7 +298,7 @@ const Input = (params) => {
           inlineToolbar: true,
         },
         dynamicLink: {
-          class: DynamicLinkTool,
+          class: SanitizedDynamicLinkTool,
           inlineToolbar: true,
           config: {
             endpoints: {
@@ -291,6 +316,7 @@ const Input = (params) => {
           {
             minHeight: 32,
             inlineToolbar: ['dynamicLink'],
+            sanitizer: DYNAMIC_LINK_SANITIZER,
           },
           configuredEditorOptions
         ),
