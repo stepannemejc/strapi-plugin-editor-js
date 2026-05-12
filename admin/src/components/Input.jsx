@@ -21,6 +21,7 @@ import MediaLibAdapter from '../medialib/adapter';
 import { changeFunc } from '../medialib/utils';
 import EditorJsImage from '@editorjs/simple-image';
 import { DynamicLinkTool } from 'editorjs-external-item-link-picker';
+import 'editorjs-external-item-link-picker/dist/style.css';
 
 const TOOL_CLASSES = {
   paragraph: EditorJsParagraph,
