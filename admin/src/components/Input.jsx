@@ -18,6 +18,7 @@ import MediaLibComponent from '../medialib/component.jsx';
 import MediaLibAdapter from '../medialib/adapter';
 import { changeFunc } from '../medialib/utils';
 import EditorJsImage from '@editorjs/simple-image';
+import { DynamicLinkTool } from 'editorjs-external-item-link-picker';
 
 /**
  * @template {({ target: { name: string, value: string } }) => any} OnChangeFn
@@ -74,6 +75,8 @@ const Input = (params) => {
             setEditorJsOutputData(outputData);
             onChange({ target: { name, value: editorJsOutputDataToJson(outputData) } });
           },
+
+          inlineToolbar: ['dynamicLink'],
 
           tools: {
             paragraph: {
@@ -157,6 +160,16 @@ const Input = (params) => {
             warning: {
               class: Warning,
               inlineToolbar: true,
+            },
+            dynamicLink: {
+              class: DynamicLinkTool,
+              inlineToolbar: true,
+              config: {
+                endpoints: {
+                  categories: '/api/categories',
+                  itemsByCategory: '/api/items/{categoryId}',
+                },
+              },
             },
           },
         })
