@@ -315,7 +315,7 @@ const Input = (params) => {
         ...deepMerge(
           {
             minHeight: 32,
-            inlineToolbar: ['dynamicLink'],
+            //inlineToolbar: ['dynamicLink'],
             sanitizer: DYNAMIC_LINK_SANITIZER,
           },
           configuredEditorOptions
