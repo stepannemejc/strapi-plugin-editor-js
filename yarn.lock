@@ -4878,10 +4878,10 @@ ecdsa-sig-formatter@1.0.11:
   dependencies:
     safe-buffer "^5.0.1"
 
-editorjs-external-item-link-picker@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/editorjs-external-item-link-picker/-/editorjs-external-item-link-picker-0.1.0.tgz"
-  integrity sha512-GjPX97vLP8uqLdSjNJlr8DkbGsg+v3AryAgCdoGvoowDD80wkCcoUGzSHnD9iwvtO5ac0uGo0YaRHwF2dBxs1g==
+editorjs-external-item-link-picker@0.1.1:
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/editorjs-external-item-link-picker/-/editorjs-external-item-link-picker-0.1.1.tgz#86b379877c97478237b16ad172efc055de9ea713"
+  integrity sha512-l+U1Fc06wyp2NPZRVOhj2DOPLAK/R1SeZh4QtBvkrVrEuGpSYkCwr3WmE/ez0axFNKJ79U234M5ZJXCquK8vYg==
 
 ee-first@1.1.1:
   version "1.1.1"
