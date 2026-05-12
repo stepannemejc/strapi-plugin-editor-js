@@ -9,16 +9,131 @@ import EditorJsEmbed from '@editorjs/embed';
 import Warning from '@editorjs/warning';
 import TOC from '@phigoro/editorjs-toc';
 import { Box, Field } from '@strapi/design-system';
+import { getFetchClient } from '@strapi/strapi/admin';
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { editorJsOutputDataToJson, jsonToEditorJsOutputData } from '../utils/jsonUtils';
 import { getTranslation } from '../utils/getTranslation';
+import { PLUGIN_ID } from '../pluginId';
 import MediaLibComponent from '../medialib/component.jsx';
 import MediaLibAdapter from '../medialib/adapter';
 import { changeFunc } from '../medialib/utils';
 import EditorJsImage from '@editorjs/simple-image';
-import { DynamicLinkTool } from 'editorjs-external-item-link-picker';
+
+const TOOL_CLASSES = {
+  paragraph: EditorJsParagraph,
+  EditorJsParagraph,
+  header: EditorJsHeader,
+  EditorJsHeader,
+  quote: EditorJsQuote,
+  EditorJsQuote,
+  table: EditorJsTable,
+  EditorJsTable,
+  list: EditorJsList,
+  EditorJsList,
+  mediaLib: MediaLibAdapter,
+  MediaLibAdapter,
+  image: EditorJsImage,
+  EditorJsImage,
+  embed: EditorJsEmbed,
+  EditorJsEmbed,
+  raw: EditorJsRaw,
+  EditorJsRaw,
+  warning: Warning,
+  Warning,
+  toc: TOC,
+  TOC,
+};
+
+let pluginConfigPromise;
+
+const isPlainObject = (value) => Object.prototype.toString.call(value) === '[object Object]';
+
+const deepMerge = (target, source) => {
+  if (!isPlainObject(source)) {
+    return target;
+  }
+
+  return Object.entries(source).reduce(
+    (merged, [key, value]) => {
+      if (isPlainObject(value) && isPlainObject(merged[key])) {
+        return {
+          ...merged,
+          [key]: deepMerge(merged[key], value),
+        };
+      }
+
+      return {
+        ...merged,
+        [key]: value,
+      };
+    },
+    { ...target }
+  );
+};
+
+const resolveToolClass = (toolName, toolDefinition, defaultToolDefinition) => {
+  if (typeof toolDefinition.class !== 'string') {
+    return toolDefinition;
+  }
+
+  const toolClass = TOOL_CLASSES[toolDefinition.class] || TOOL_CLASSES[toolName];
+
+  if (toolClass) {
+    return {
+      ...toolDefinition,
+      class: toolClass,
+    };
+  }
+
+  if (defaultToolDefinition?.class) {
+    return {
+      ...toolDefinition,
+      class: defaultToolDefinition.class,
+    };
+  }
+
+  console.warn(
+    `[${PLUGIN_ID}] Unknown Editor.js tool class "${toolDefinition.class}" for tool "${toolName}".`
+  );
+
+  return undefined;
+};
+
+const mergeToolsConfig = (defaultTools, configuredTools = {}) =>
+  Object.entries(deepMerge(defaultTools, configuredTools)).reduce(
+    (tools, [toolName, toolDefinition]) => {
+      const resolvedTool = resolveToolClass(toolName, toolDefinition, defaultTools[toolName]);
+
+      if (!resolvedTool) {
+        return tools;
+      }
+
+      return {
+        ...tools,
+        [toolName]: resolvedTool,
+      };
+    },
+    {}
+  );
+
+const getPluginConfig = async () => {
+  if (!pluginConfigPromise) {
+    pluginConfigPromise = getFetchClient()
+      .get(`/${PLUGIN_ID}/config`)
+      .then(({ data }) => data?.data || {})
+      .catch((error) => {
+        console.warn(
+          `[${PLUGIN_ID}] Could not load plugin config. Using default Editor.js config.`,
+          error
+        );
+        return {};
+      });
+  }
+
+  return pluginConfigPromise;
+};
 
 /**
  * @template {({ target: { name: string, value: string } }) => any} OnChangeFn
@@ -43,6 +158,8 @@ const Input = (params) => {
   const [elementId] = useState(`editorjs-${name}`);
   const [editorJsOutputData, setEditorJsOutputData] = useState(jsonToEditorJsOutputData(value));
   const [editorJsInstance, setEditorJsInstance] = useState(undefined);
+  const [pluginConfig, setPluginConfig] = useState({});
+  const [isPluginConfigLoaded, setIsPluginConfigLoaded] = useState(false);
 
   const [isMediaLibOpen, setIsMediaLibOpen] = useState(false);
 
@@ -61,121 +178,135 @@ const Input = (params) => {
   }, [value]);
 
   useEffect(() => {
-    if (!editorJsInstance) {
+    getPluginConfig().then((config) => {
+      setPluginConfig(config);
+      setIsPluginConfigLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!editorJsInstance && isPluginConfigLoaded) {
+      const tools = {
+        paragraph: {
+          // https://github.com/editor-js/paragraph
+          class: EditorJsParagraph,
+          inlineToolbar: true,
+          config: {
+            placeholder: formatMessage({ id: getTranslation('placeholder.paragraph') }),
+          },
+        },
+        header: {
+          // https://github.com/editor-js/header
+          class: EditorJsHeader,
+          inlineToolbar: true,
+          config: {
+            placeholder: formatMessage({ id: getTranslation('placeholder.header') }),
+            defaultLevel: 1,
+          },
+        },
+        quote: {
+          // https://github.com/editor-js/quote
+          class: EditorJsQuote,
+          inlineToolbar: true,
+          config: {
+            quotePlaceholder: formatMessage({ id: getTranslation('placeholder.quote') }),
+            captionPlaceholder: formatMessage({
+              id: getTranslation('placeholder.quoteCaption'),
+            }),
+          },
+        },
+        table: {
+          // https://github.com/editor-js/table
+          class: EditorJsTable,
+          inlineToolbar: true,
+          config: {
+            withHeadings: true,
+          },
+        },
+        list: {
+          // https://github.com/editor-js/list
+          class: EditorJsList,
+          inlineToolbar: true,
+          config: {
+            defaultStyle: 'unordered',
+          },
+        },
+        mediaLib: {
+          class: MediaLibAdapter,
+          config: {
+            mediaLibToggleFunc,
+          },
+        },
+        image: {
+          class: EditorJsImage,
+          inlineToolbar: true,
+          toolbox: false, // only loaded to support rendering medialib images
+        },
+        embed: {
+          class: EditorJsEmbed,
+          inlineToolbar: true,
+          config: {
+            services: {
+              bunnystream: {
+                regex: /https:\/\/iframe.mediadelivery.net\/(embed|play)\/([0-9]+)\/([0-9a-f\-]+)/,
+                embedUrl:
+                  'https://iframe.mediadelivery.net/embed/<%= remote_id %>?autoplay=false&loop=false&muted=false&preload=true&responsive=true',
+                html: "<iframe scrolling='no' frameborder='no' allow='accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;' allowfullscreen='true' style='width: 100%; aspect-ratio: 16/9'></iframe>",
+                id: (groups) => groups.slice(1).join('/'),
+              },
+            },
+          },
+        },
+        raw: {
+          class: EditorJsRaw,
+          inlineToolbar: true,
+        },
+        // toc: {
+        //   class: TOC,
+        // },
+        warning: {
+          class: Warning,
+          inlineToolbar: true,
+        },
+      };
+
+      const configuredEditorOptions = pluginConfig.editor || {};
+      const configuredTools = pluginConfig.tools || {};
+      const editorConfig = {
+        ...deepMerge(
+          {
+            minHeight: 32,
+            inlineToolbar: ['dynamicLink'],
+          },
+          configuredEditorOptions
+        ),
+        tools: mergeToolsConfig(tools, configuredTools),
+      };
+
       setEditorJsInstance(
         // https://editorjs.io/configuration
         new EditorJs({
+          ...editorConfig,
           holder: elementId,
-          minHeight: 32,
-
           data: editorJsOutputData,
-
           onChange: async (api) => {
             const outputData = await api.saver.save();
             setEditorJsOutputData(outputData);
             onChange({ target: { name, value: editorJsOutputDataToJson(outputData) } });
           },
-
-          inlineToolbar: ['dynamicLink'],
-
-          tools: {
-            paragraph: {
-              // https://github.com/editor-js/paragraph
-              class: EditorJsParagraph,
-              inlineToolbar: true,
-              config: {
-                placeholder: formatMessage({ id: getTranslation('placeholder.paragraph') }),
-              },
-            },
-            header: {
-              // https://github.com/editor-js/header
-              class: EditorJsHeader,
-              inlineToolbar: true,
-              config: {
-                placeholder: formatMessage({ id: getTranslation('placeholder.header') }),
-                defaultLevel: 1,
-              },
-            },
-            quote: {
-              // https://github.com/editor-js/quote
-              class: EditorJsQuote,
-              inlineToolbar: true,
-              config: {
-                quotePlaceholder: formatMessage({ id: getTranslation('placeholder.quote') }),
-                captionPlaceholder: formatMessage({
-                  id: getTranslation('placeholder.quoteCaption'),
-                }),
-              },
-            },
-            table: {
-              // https://github.com/editor-js/table
-              class: EditorJsTable,
-              inlineToolbar: true,
-              config: {
-                withHeadings: true,
-              },
-            },
-            list: {
-              // https://github.com/editor-js/list
-              class: EditorJsList,
-              inlineToolbar: true,
-              config: {
-                defaultStyle: 'unordered',
-              },
-            },
-            mediaLib: {
-              class: MediaLibAdapter,
-              config: {
-                mediaLibToggleFunc,
-              },
-            },
-            image: {
-              class: EditorJsImage,
-              inlineToolbar: true,
-              toolbox: false, // only loaded to support rendering medialib images
-            },
-            embed: {
-              class: EditorJsEmbed,
-              inlineToolbar: true,
-              config: {
-                services: {
-                  bunnystream: {
-                    regex:
-                      /https:\/\/iframe.mediadelivery.net\/(embed|play)\/([0-9]+)\/([0-9a-f\-]+)/,
-                    embedUrl:
-                      'https://iframe.mediadelivery.net/embed/<%= remote_id %>?autoplay=false&loop=false&muted=false&preload=true&responsive=true',
-                    html: "<iframe scrolling='no' frameborder='no' allow='accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;' allowfullscreen='true' style='width: 100%; aspect-ratio: 16/9'></iframe>",
-                    id: (groups) => groups.slice(1).join('/'),
-                  },
-                },
-              },
-            },
-            raw: {
-              class: EditorJsRaw,
-              inlineToolbar: true,
-            },
-            // toc: {
-            //   class: TOC,
-            // },
-            warning: {
-              class: Warning,
-              inlineToolbar: true,
-            },
-            dynamicLink: {
-              class: DynamicLinkTool,
-              inlineToolbar: true,
-              config: {
-                endpoints: {
-                  categories: '/api/categories',
-                  itemsByCategory: '/api/items/{categoryId}',
-                },
-              },
-            },
-          },
         })
       );
     }
-  }, []);
+  }, [
+    editorJsInstance,
+    editorJsOutputData,
+    elementId,
+    formatMessage,
+    isPluginConfigLoaded,
+    name,
+    onChange,
+    pluginConfig,
+  ]);
 
   return (
     <>
