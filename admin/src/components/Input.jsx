@@ -20,6 +20,7 @@ import MediaLibComponent from '../medialib/component.jsx';
 import MediaLibAdapter from '../medialib/adapter';
 import { changeFunc } from '../medialib/utils';
 import EditorJsImage from '@editorjs/simple-image';
+import { DynamicLinkTool } from 'editorjs-external-item-link-picker';
 
 const TOOL_CLASSES = {
   paragraph: EditorJsParagraph,
@@ -44,6 +45,8 @@ const TOOL_CLASSES = {
   Warning,
   toc: TOC,
   TOC,
+  dynamicLink: DynamicLinkTool,
+  DynamicLinkTool,
 };
 
 let pluginConfigPromise;
@@ -267,6 +270,16 @@ const Input = (params) => {
         warning: {
           class: Warning,
           inlineToolbar: true,
+        },
+        dynamicLink: {
+          class: DynamicLinkTool,
+          inlineToolbar: true,
+          config: {
+            endpoints: {
+              categories: '/api/categories',
+              itemsByCategory: '/api/items/{categoryId}',
+            },
+          },
         },
       };
 
